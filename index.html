@@ -63,6 +63,32 @@
       color: var(--paper);
       font-weight: 500;
     }
+
+    .portal-entry {
+      position: fixed;
+      bottom: clamp(1.5rem, 4vw, 2.5rem);
+      left: 50%;
+      display: grid;
+      width: 3rem;
+      height: 3rem;
+      place-items: center;
+      transform: translateX(-50%);
+      color: var(--muted);
+      font-family: "Segoe UI Symbol", "Apple Symbols", sans-serif;
+      font-size: 1.7rem;
+      line-height: 1;
+      text-decoration: none;
+    }
+
+    .portal-entry:hover {
+      color: var(--paper);
+    }
+
+    .portal-entry:focus-visible {
+      outline: 1px solid var(--paper);
+      outline-offset: 0.25rem;
+      border-radius: 50%;
+    }
   </style>
 </head>
 <body>
@@ -71,5 +97,6 @@
     <p>Found on 29 September 2026.</p>
     <p>You made it to the top.</p>
   </main>
+  <a class="portal-entry" href="/start/" aria-label="Enter the start page">⊙</a>
 </body>
 </html>
