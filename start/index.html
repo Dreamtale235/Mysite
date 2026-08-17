@@ -69,6 +69,7 @@
     }
 
     .weather {
+      min-height: 5.75rem;
       margin-top: clamp(1.7rem, 5vw, 2.4rem);
       padding-top: clamp(1.2rem, 3vw, 1.6rem);
       border-top: 1px solid var(--line);
@@ -81,6 +82,7 @@
       font-weight: 400;
       letter-spacing: -0.025em;
       line-height: 1.1;
+      transition: opacity 220ms ease, transform 220ms ease;
     }
 
     .weather-details {
@@ -95,6 +97,24 @@
       font-weight: 400;
       letter-spacing: 0.055em;
       line-height: 1.5;
+      transition: opacity 220ms ease, transform 220ms ease;
+    }
+
+    .weather.is-pending .weather-primary,
+    .weather.is-unavailable .weather-primary {
+      opacity: 0.45;
+    }
+
+    .weather:not(.is-ready) .weather-details {
+      visibility: hidden;
+      opacity: 0;
+      transform: translateY(0.4rem);
+    }
+
+    .weather.is-ready .weather-primary,
+    .weather.is-ready .weather-details {
+      opacity: 1;
+      transform: translateY(0);
     }
 
     .search {
@@ -167,7 +187,16 @@
     }
 
     @media (max-width: 32rem) {
+      .weather { min-height: 7rem; }
+
       .weather-details { gap: 0.4rem 0.7rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .weather-primary,
+      .weather-details {
+        transition: none;
+      }
     }
   </style>
 </head>
@@ -176,9 +205,9 @@
     <h1>Holy Grail</h1>
     <p class="greeting" id="greeting">Good morning</p>
     <time id="local-time" aria-live="polite"></time>
-    <section class="weather" id="weather" aria-live="polite" hidden>
-      <p class="weather-primary" id="weather-primary"></p>
-      <p class="weather-details">
+    <section class="weather is-pending" id="weather" aria-live="polite" aria-busy="true">
+      <p class="weather-primary" id="weather-primary">— · —</p>
+      <p class="weather-details" aria-hidden="true">
         <span id="weather-high"></span>
         <span id="weather-low"></span>
         <span id="weather-rain"></span>
@@ -197,6 +226,7 @@
     const localTime = document.querySelector("#local-time");
     const weather = document.querySelector("#weather");
     const weatherPrimary = document.querySelector("#weather-primary");
+    const weatherDetails = document.querySelector(".weather-details");
     const weatherHigh = document.querySelector("#weather-high");
     const weatherLow = document.querySelector("#weather-low");
     const weatherRain = document.querySelector("#weather-rain");
@@ -251,7 +281,25 @@
       weatherRain.textContent = `Rain ${rounded(daily.precipitation_probability_max[0])}%`;
       weatherHumidity.textContent = `Humidity ${rounded(current.relative_humidity_2m)}%`;
       weatherWind.textContent = `Wind ${rounded(current.wind_speed_10m)} km/h`;
-      weather.hidden = false;
+      weather.setAttribute("aria-busy", "false");
+      weatherDetails.setAttribute("aria-hidden", "false");
+
+      if (!weather.classList.contains("is-ready")) {
+        weather.classList.remove("is-unavailable");
+        weather.classList.add("is-pending");
+        window.requestAnimationFrame(() => {
+          weather.classList.remove("is-pending");
+          weather.classList.add("is-ready");
+        });
+      }
+    }
+
+    function keepWeatherPlaceholder() {
+      if (weather.classList.contains("is-ready")) return;
+      weatherPrimary.textContent = "— · —";
+      weather.setAttribute("aria-busy", "false");
+      weather.classList.remove("is-pending");
+      weather.classList.add("is-unavailable");
     }
 
     function startWeather(latitude, longitude) {
@@ -274,7 +322,7 @@
           if (!response.ok) throw new Error("Weather request failed");
           showWeather(await response.json());
         } catch {
-          weather.hidden = true;
+          keepWeatherPlaceholder();
         } finally {
           window.clearTimeout(timeout);
         }
@@ -285,10 +333,13 @@
     }
 
     function initialiseWeather() {
-      if (!navigator.geolocation) return;
+      if (!navigator.geolocation) {
+        keepWeatherPlaceholder();
+        return;
+      }
       navigator.geolocation.getCurrentPosition(
         ({ coords }) => startWeather(coords.latitude, coords.longitude),
-        () => {},
+        keepWeatherPlaceholder,
         { enableHighAccuracy: false, timeout: 10000, maximumAge: 15 * 60 * 1000 }
       );
     }
