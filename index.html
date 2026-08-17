@@ -41,6 +41,10 @@
 
     h1, p { margin: 0; }
 
+    h1 + p {
+      margin-top: clamp(0.75rem, 2vw, 1.25rem);
+    }
+
     h1 {
       font-family: "Cormorant Garamond", Iowan Old Style, Palatino Linotype, Book Antiqua, Georgia, serif;
       font-size: clamp(4rem, 13vw, 9rem);
