@@ -8,7 +8,7 @@
   <link rel="icon" href="/favicon.svg?v=1" type="image/svg+xml" sizes="any">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400&family=Inter:wght@400;500&family=Noto+Serif+SC:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Noto+Serif:wght@400;500&family=Noto+Serif+SC:wght@400;500&display=swap" rel="stylesheet">
   <style>
     :root {
       color-scheme: dark;
@@ -42,7 +42,7 @@
 
     h1 {
       color: var(--paper);
-      font-family: Fraunces, Iowan Old Style, Palatino Linotype, Book Antiqua, Georgia, serif;
+      font-family: "Noto Serif", Iowan Old Style, Palatino Linotype, Book Antiqua, Georgia, serif;
       font-size: clamp(3.25rem, 10vw, 6.5rem);
       font-weight: 400;
       letter-spacing: -0.045em;
@@ -121,11 +121,39 @@
       letter-spacing: 0.18em;
     }
 
-    .activity p {
+    .activity-summary {
       margin-top: 1rem;
       font-family: "Noto Serif SC", "Songti SC", SimSun, serif;
       font-size: clamp(1rem, 2.25vw, 1.15rem);
-      line-height: 2;
+      line-height: 1.9;
+      overflow-wrap: anywhere;
+    }
+
+    .activity details { margin-top: 1rem; }
+
+    .activity summary {
+      color: var(--muted);
+      cursor: pointer;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      line-height: 1.5;
+    }
+
+    .activity summary:hover { color: var(--paper); }
+
+    .activity summary:focus-visible {
+      outline: 1px solid var(--paper);
+      outline-offset: 0.25rem;
+    }
+
+    .activity-original {
+      margin-top: 0.75rem;
+      color: var(--muted);
+      font-family: "Noto Serif SC", "Songti SC", SimSun, serif;
+      font-size: clamp(0.82rem, 1.8vw, 0.92rem);
+      line-height: 1.9;
       overflow-wrap: anywhere;
     }
 
@@ -184,11 +212,19 @@
     <section class="activities" aria-live="polite">
       <section class="activity" aria-labelledby="yi-heading">
         <h2 id="yi-heading">宜</h2>
-        <p id="yi">—</p>
+        <p class="activity-summary" id="yi-summary">—</p>
+        <details>
+          <summary>查看传统用语</summary>
+          <p class="activity-original" id="yi-original">—</p>
+        </details>
       </section>
       <section class="activity" aria-labelledby="ji-heading">
         <h2 id="ji-heading">忌</h2>
-        <p id="ji">—</p>
+        <p class="activity-summary" id="ji-summary">—</p>
+        <details>
+          <summary>查看传统用语</summary>
+          <p class="activity-original" id="ji-original">—</p>
+        </details>
       </section>
     </section>
   </main>
@@ -200,8 +236,10 @@
     const lunarYear = document.querySelector("#lunar-year");
     const ganzhi = document.querySelector("#ganzhi");
     const zodiac = document.querySelector("#zodiac");
-    const yi = document.querySelector("#yi");
-    const ji = document.querySelector("#ji");
+    const yiSummary = document.querySelector("#yi-summary");
+    const yiOriginal = document.querySelector("#yi-original");
+    const jiSummary = document.querySelector("#ji-summary");
+    const jiOriginal = document.querySelector("#ji-original");
 
     const dateFormatter = new Intl.DateTimeFormat("en-GB", {
       weekday: "long",
@@ -210,14 +248,92 @@
       day: "numeric"
     });
 
+    const activityGroups = Object.freeze({
+      "祭祀": "仪式与亲友",
+      "祈福": "仪式与亲友",
+      "斋醮": "仪式与亲友",
+      "酬神": "仪式与亲友",
+      "开光": "仪式与亲友",
+      "冠笄": "仪式与亲友",
+      "嫁娶": "仪式与亲友",
+      "订盟": "仪式与亲友",
+      "纳采": "仪式与亲友",
+      "会亲友": "仪式与亲友",
+      "进人口": "仪式与亲友",
+      "求嗣": "仪式与亲友",
+      "出行": "出行与事务",
+      "会友": "出行与事务",
+      "移徙": "居家与生活",
+      "入宅": "居家与生活",
+      "安床": "居家与生活",
+      "安门": "居家与生活",
+      "安香": "居家与生活",
+      "出火": "居家与生活",
+      "作灶": "居家与生活",
+      "扫舍": "居家与生活",
+      "拆卸": "居家与生活",
+      "解除": "居家与生活",
+      "修饰垣墙": "居家与生活",
+      "补垣": "居家与生活",
+      "塞穴": "居家与生活",
+      "开市": "出行与事务",
+      "开业": "出行与事务",
+      "交易": "出行与事务",
+      "立券": "出行与事务",
+      "纳财": "出行与事务",
+      "挂匾": "出行与事务",
+      "求财": "出行与事务",
+      "开仓": "出行与事务",
+      "纳畜": "出行与事务",
+      "栽种": "出行与事务",
+      "牧养": "出行与事务",
+      "开渠": "工程与土地",
+      "伐木": "工程与土地",
+      "掘井": "工程与土地",
+      "开池": "工程与土地",
+      "破土": "工程与土地",
+      "动土": "工程与土地",
+      "修造": "工程与土地",
+      "起基": "工程与土地",
+      "上梁": "工程与土地",
+      "竖柱": "工程与土地",
+      "安葬": "纪念与告别",
+      "启钻": "纪念与告别",
+      "修坟": "纪念与告别",
+      "立碑": "纪念与告别",
+      "除服": "纪念与告别",
+      "成服": "纪念与告别",
+      "理发": "个人照料",
+      "沐浴": "个人照料",
+      "求医": "个人照料",
+      "针灸": "个人照料",
+      "入学": "出行与事务",
+      "习艺": "出行与事务",
+      "余事勿取": "无特别事项",
+      "诸事不宜": "无特别事项",
+      "无": "无特别事项"
+    });
+
+    function activitySummary(activities) {
+      const groups = [];
+      for (const activity of activities) {
+        const group = activityGroups[activity] || "其他事项";
+        if (!groups.includes(group)) groups.push(group);
+      }
+      if (!groups.length) return "—";
+      return `${groups.slice(0, 3).join(" · ")}${groups.length > 3 ? " · 等" : ""}`;
+    }
+
     function setPlaceholder() {
       solarDate.textContent = "—";
       lunarDate.textContent = "—";
       lunarYear.textContent = "—";
       ganzhi.textContent = "—";
       zodiac.textContent = "—";
-      yi.textContent = "—";
-      ji.textContent = "—";
+      yiSummary.textContent = "—";
+      yiOriginal.textContent = "—";
+      jiSummary.textContent = "—";
+      jiOriginal.textContent = "—";
     }
 
     function updateAlmanac() {
@@ -233,8 +349,12 @@
         lunarYear.textContent = `${lunar.getYearInGanZhi()}年`;
         ganzhi.textContent = `${lunar.getMonthInGanZhi()}月 · ${lunar.getDayInGanZhi()}日`;
         zodiac.textContent = lunar.getYearShengXiao();
-        yi.textContent = lunar.getDayYi().join(" · ");
-        ji.textContent = lunar.getDayJi().join(" · ");
+        const yiActivities = lunar.getDayYi();
+        const jiActivities = lunar.getDayJi();
+        yiSummary.textContent = activitySummary(yiActivities);
+        yiOriginal.textContent = yiActivities.join(" · ");
+        jiSummary.textContent = activitySummary(jiActivities);
+        jiOriginal.textContent = jiActivities.join(" · ");
       } catch {
         setPlaceholder();
       }
